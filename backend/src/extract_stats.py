@@ -2,14 +2,29 @@ from nba_api.stats.endpoints import shotchartdetail
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playerdashboardbyclutch
 from nba_api.stats.endpoints import alltimeleadersgrids
+from nba.api.stats.endpoints import playerindex
+
+
 
 import time
+
+
+def miscellaneous_info(player_name):
+    player_dict = players.find_players_by_full_name(player_name)[0]
+
+    id = player_dict["id"]
+
+    info = playerindex.PlayerIndex(
+        
+    )
+
 
 
 
 def all_time_rankings(player_name):
     player_dict = players.find_players_by_full_name(player_name)[0]
 
+    print(player_dict)
     id = player_dict["id"]
 
     leaders = alltimeleadersgrids.AllTimeLeadersGrids(
@@ -160,9 +175,6 @@ def get_clutch_stats(player_name):
         "Overall 3PM": overall_3pm,
         "Overall 3 Point Percentage": three_point_percentage
     }
-
-
-
 
 
 
