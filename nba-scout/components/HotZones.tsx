@@ -1,175 +1,169 @@
-export default function HotZones() {
-    return (
-        <svg
-            viewBox="0 0 600 470"
-            className="w-full h-full"
-        >
-            {/* Court background */}
-            <rect x="0" y="0" width="600" height="470" fill="#1a1a1a"/>
-            
-            {/* Court outline */}
-            <rect 
-                x="20" 
-                y="20" 
-                width="560" 
-                height="430" 
-                fill="none" 
-                stroke="#fff" 
-                strokeWidth="3"
-            />
-            
-            {/* Baseline */}
-            <line 
-                x1="20" 
-                y1="450" 
-                x2="580" 
-                y2="450" 
-                stroke="#fff" 
-                strokeWidth="3"
-            />
-            
-            {/* Three-point arc */}
-            <path 
-                d="M 60 450 Q 60 430, 70 410 A 245 245 0 0 1 530 410 Q 540 430, 540 450" 
-                stroke="#fff" 
-                strokeWidth="3" 
-                fill="none"
-            />
-            
-            {/* Above the Break 3 - BLUE (outside 3pt line, above corners) */}
-            <path 
-                id="above-break-3"
-                d="M 70 410
-                   A 245 245 0 0 1 530 410
-                   L 530 20
-                   L 70 20
-                   Z" 
-                fill="#3b82f6" 
-                stroke="#fff" 
-                strokeWidth="2"
-                data-zone="above-break-3"
-            />
-            
-            {/* Left Corner 3 - GREEN */}
-            <path 
-                id="left-corner-3"
-                d="M 20 450 L 60 450 Q 60 430, 70 410 L 70 240 L 20 240 Z" 
-                fill="#22c55e" 
-                stroke="#fff" 
-                strokeWidth="2"
-                data-zone="left-corner-3"
-            />
-            
-            {/* Right Corner 3 - GREEN */}
-            <path 
-                id="right-corner-3"
-                d="M 580 450 L 540 450 Q 540 430, 530 410 L 530 240 L 580 240 Z" 
-                fill="#22c55e" 
-                stroke="#fff" 
-                strokeWidth="2"
-                data-zone="right-corner-3"
-            />
-            
-            {/* Midrange - ORANGE (extended oval inside 3pt, outside paint) */}
-            <path 
-                id="midrange"
-                d="M 70 410
-                   A 245 245 0 0 1 530 410
-                   L 530 240
-                   A 230 190 0 0 0 70 240
-                   Z
-                   M 210 252
-                   A 90 90 0 0 1 390 252
-                   L 390 450
-                   L 210 450
-                   L 210 252
-                   Z" 
-                fill="#f97316" 
-                stroke="#fff" 
-                strokeWidth="2"
-                data-zone="midrange"
-            />
-            
-            {/* Paint outline */}
-            <rect 
-                x="210" 
-                y="252" 
-                width="180" 
-                height="198" 
-                fill="none" 
-                stroke="#fff" 
-                strokeWidth="3"
-            />
-            
-            {/* Free throw circle top arc */}
-            <path 
-                d="M 210 252 A 90 90 0 0 1 390 252" 
-                stroke="#fff" 
-                strokeWidth="3" 
-                fill="none"
-            />
-            
-            {/* Free throw circle bottom arc (dashed) */}
-            <path 
-                d="M 210 252 A 90 90 0 0 0 390 252" 
-                stroke="#fff" 
-                strokeWidth="3" 
-                strokeDasharray="5,5"
-                fill="none"
-            />
-            
-            {/* Paint Non-Restricted Area - PURPLE */}
-            <path 
-                id="paint-non-restricted"
-                d="M 210 252 
-                   L 210 450
-                   L 390 450
-                   L 390 252
-                   A 90 90 0 0 0 210 252
-                   M 260 438
-                   A 40 40 0 0 0 340 438
-                   L 340 450
-                   L 260 450
-                   Z" 
-                fill="#a855f7" 
-                stroke="#fff" 
-                strokeWidth="2"
-                data-zone="paint-non-restricted"
-            />
-            
-            {/* Restricted Area semicircle - RED */}
-            <path 
-                id="restricted-area"
-                d="M 260 438 
-                   A 40 40 0 0 0 340 438
-                   L 340 450
-                   L 260 450
-                   Z" 
-                fill="#ef4444" 
-                stroke="#fff" 
-                strokeWidth="3"
-                data-zone="restricted-area"
-            />
-            
-            {/* Basket */}
-            <circle 
-                cx="300" 
-                cy="438" 
-                r="9" 
-                fill="none" 
-                stroke="#ff6b35" 
-                strokeWidth="3"
-            />
-            
-            {/* Backboard */}
-            <line 
-                x1="270" 
-                y1="450" 
-                x2="330" 
-                y2="450" 
-                stroke="#fff" 
-                strokeWidth="4"
-            />
-        </svg>
-    )
+import type { ZoneEfficiency, ZoneId } from "./types";
+
+interface HotZonesProps {
+  // If omitted, falls back to the original static palette.
+  zoneEfficiency?: ZoneEfficiency;
+}
+
+// Maps a 0–1 efficiency value to a color on a cold -> hot scale.
+// Swap this out for whatever palette you like — this is just a starting point.
+function efficiencyToColor(value: number | undefined, fallback: string): string {
+  if (value === undefined) return fallback;
+  const clamped = Math.max(0, Math.min(1, value));
+
+  // blue (cold/inefficient) -> red (hot/efficient)
+  const cold = { r: 59, g: 130, b: 246 }; // #3b82f6
+  const hot = { r: 239, g: 68, b: 68 }; // #ef4444
+
+  const r = Math.round(cold.r + (hot.r - cold.r) * clamped);
+  const g = Math.round(cold.g + (hot.g - cold.g) * clamped);
+  const b = Math.round(cold.b + (hot.b - cold.b) * clamped);
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+export default function HotZones({ zoneEfficiency }: HotZonesProps) {
+  const W = 600, H = 470
+  const baselineY = 450
+  const basketX = 300, basketY = 430  // moved closer to baseline
+
+  const paintLeft = 210, paintRight = 390  // wider paint
+  const paintTop = 210, paintBottom = baselineY
+
+  const ftRadius = 75  // more circular (was stretching because paint width forced it)
+  const ftLineY = paintTop
+
+  const cornerX_L = 60, cornerX_R = 540
+  const cornerBreakY = 310
+  const tpRadius = 240
+
+  // FT circle endpoints: 85% of paint width, centered
+  const ftSpan = (paintRight - paintLeft) * 0.85 / 2  // half-span
+  const ftLeft = basketX - ftSpan
+  const ftRight = basketX + ftSpan
+
+  // Original static colors, used as fallback when no data is loaded yet.
+  const fallbackColors: Record<ZoneId, string> = {
+    aboveBreak3: "#3b82f6",
+    leftCorner3: "#22c55e",
+    rightCorner3: "#22c55e",
+    midrange: "#f97316",
+    paintNonRA: "#a855f7",
+    restrictedArea: "#ef4444",
+  };
+
+  const colors: Record<ZoneId, string> = {
+    aboveBreak3: efficiencyToColor(zoneEfficiency?.aboveBreak3, fallbackColors.aboveBreak3),
+    leftCorner3: efficiencyToColor(zoneEfficiency?.leftCorner3, fallbackColors.leftCorner3),
+    rightCorner3: efficiencyToColor(zoneEfficiency?.rightCorner3, fallbackColors.rightCorner3),
+    midrange: efficiencyToColor(zoneEfficiency?.midrange, fallbackColors.midrange),
+    paintNonRA: efficiencyToColor(zoneEfficiency?.paintNonRA, fallbackColors.paintNonRA),
+    restrictedArea: efficiencyToColor(zoneEfficiency?.restrictedArea, fallbackColors.restrictedArea),
+  };
+
+  return (
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-full">
+          <rect x="0" y="0" width={W} height={H} fill="#1a1a1a"/>
+
+          {/* Above the break 3 */}
+          <path
+              d={`
+                  M 20 20
+                  L 580 20
+                  L 580 ${cornerBreakY}
+                  L ${cornerX_R} ${cornerBreakY}
+                  A ${tpRadius} ${tpRadius} 0 0 0 ${cornerX_L} ${cornerBreakY}
+                  L 20 ${cornerBreakY}
+                  Z
+              `}
+              fill={colors.aboveBreak3}
+          />
+
+          {/* Left corner 3 */}
+          <path
+              d={`M 20 ${cornerBreakY} L ${cornerX_L} ${cornerBreakY} L ${cornerX_L} ${baselineY} L 20 ${baselineY} Z`}
+              fill={colors.leftCorner3}
+          />
+
+          {/* Right corner 3 */}
+          <path
+              d={`M 580 ${cornerBreakY} L ${cornerX_R} ${cornerBreakY} L ${cornerX_R} ${baselineY} L 580 ${baselineY} Z`}
+              fill={colors.rightCorner3}
+          />
+
+          {/* Midrange */}
+          <path
+              fillRule="evenodd"
+              d={`
+                  M ${cornerX_L} ${cornerBreakY}
+                  A ${tpRadius} ${tpRadius} 0 0 1 ${cornerX_R} ${cornerBreakY}
+                  L ${cornerX_R} ${baselineY}
+                  L ${cornerX_L} ${baselineY}
+                  Z
+                  M ${paintLeft} ${paintTop}
+                  L ${paintRight} ${paintTop}
+                  L ${paintRight} ${baselineY}
+                  L ${paintLeft} ${baselineY}
+                  Z
+              `}
+              fill={colors.midrange}
+          />
+
+          {/* Paint non-RA */}
+          <path
+              fillRule="evenodd"
+              d={`
+                  M ${paintLeft} ${paintTop}
+                  L ${paintRight} ${paintTop}
+                  L ${paintRight} ${baselineY}
+                  L ${paintLeft} ${baselineY}
+                  Z
+                  M ${basketX - 40} ${baselineY}
+                  A 40 40 0 0 1 ${basketX + 40} ${baselineY}
+                  Z
+              `}
+              fill={colors.paintNonRA}
+          />
+
+          {/* Restricted area */}
+          <path
+              d={`M ${basketX - 40} ${baselineY} A 40 40 0 0 1 ${basketX + 40} ${baselineY} Z`}
+              fill={colors.restrictedArea}
+          />
+
+          {/* Court lines */}
+          <rect x="20" y="20" width="560" height={H - 20} fill="none" stroke="#fff" strokeWidth="2"/>
+
+          <line x1={cornerX_L} y1={cornerBreakY} x2={cornerX_L} y2={baselineY} stroke="#fff" strokeWidth="2"/>
+          <line x1={cornerX_R} y1={cornerBreakY} x2={cornerX_R} y2={baselineY} stroke="#fff" strokeWidth="2"/>
+          <path
+              d={`M ${cornerX_L} ${cornerBreakY} A ${tpRadius} ${tpRadius} 0 0 1 ${cornerX_R} ${cornerBreakY}`}
+              fill="none" stroke="#fff" strokeWidth="2"
+          />
+
+          <rect x={paintLeft} y={paintTop} width={paintRight - paintLeft} height={paintBottom - paintTop}
+              fill="none" stroke="#fff" strokeWidth="2"/>
+
+          {/* FT circle — 85% width, circular */}
+          <path
+              d={`M ${ftLeft} ${ftLineY} A ${ftRadius} ${ftRadius} 0 0 1 ${ftRight} ${ftLineY}`}
+              fill="none" stroke="#fff" strokeWidth="2"
+          />
+          <path
+              d={`M ${ftLeft} ${ftLineY} A ${ftRadius} ${ftRadius} 0 0 0 ${ftRight} ${ftLineY}`}
+              fill="none" stroke="#fff" strokeWidth="2" strokeDasharray="6 4"
+          />
+
+          <path
+              d={`M ${basketX - 40} ${baselineY} A 40 40 0 0 1 ${basketX + 40} ${baselineY}`}
+              fill="none" stroke="#fff" strokeWidth="2"
+          />
+
+          {/* Basket */}
+          <circle cx={basketX} cy={basketY} r="10" fill="none" stroke="#ff6b35" strokeWidth="2.5"/>
+
+          {/* Backboard */}
+          <line x1={basketX - 30} y1={baselineY} x2={basketX + 30} y2={baselineY} stroke="#fff" strokeWidth="3"/>
+      </svg>
+  )
 }

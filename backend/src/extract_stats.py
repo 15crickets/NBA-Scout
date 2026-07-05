@@ -2,29 +2,170 @@ from nba_api.stats.endpoints import shotchartdetail
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playerdashboardbyclutch
 from nba_api.stats.endpoints import alltimeleadersgrids
-from nba.api.stats.endpoints import playerindex
+
+from nba_api.stats.endpoints import teamyearbyyearstats
+from nba_api.stats.endpoints import commonplayerinfo
+from nba_api.stats.endpoints import playercareerstats
+
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import llm_api
+
+def extract_stats(cells):
+
+    return {
+        "Year": cells[0],
+        "Age": cells[1],
+        "Team": cells[2],
+        "Games Played": cells[5],
+        "Games Started": cells[6],
+        "Field Goals": cells[8],
+        "Field Goal Attempts": cells[9],
+        "Field Goal Percentage": cells[10],
+        "3 Pointers": cells[11],
+        "3 Point Attempts": cells[12],
+        "3 Point Percentage": cells[13],
+        "Free Throws": cells[18],
+        "Free Throw Attempts": cells[19],
+        "Free Throw Percentage": cells[20],
+        "Rebounds Per Game": cells[23],
+        "Assists Per Game": cells[24],
+        "Steals Per Game": cells[25],
+        "Blocks Per Game": cells[26],
+        "Turnovers Per Game": cells[27],
+        "Points Per Game": cells[29]
+
+    }
 
 
+def extract_season_stats(player_name):
+    return_array = []
+    first_last = player_name.split()
+    first = first_last[0].lower()
+    last = first_last[-1].lower()
 
-import time
+    letter = last[0]
+    url = f"""https://www.basketball-reference.com/players/{letter}/{last[:5]}{first[:2]}01.html"""
+    html = requests.get(url).text
+    soup = BeautifulSoup(html, "html.parser")
 
+    row1 = soup.find("tr", {"id": "per_game_stats.2026"})
+    if row1 != None:
+        cells = [cell.get_text(strip=True) for cell in row1.find_all(["th", "td"])]
 
-def miscellaneous_info(player_name):
-    player_dict = players.find_players_by_full_name(player_name)[0]
+        return_array.append({"2025-2026": extract_stats(cells)})
+    
+    row2 = soup.find("tr", {"id": "per_game_stats.2025"})
+    if row2 != None:
+        cells = [cell.get_text(strip=True) for cell in row2.find_all(["th", "td"])]
 
-    id = player_dict["id"]
-
-    info = playerindex.PlayerIndex(
+        return_array.append({"2024-2025": extract_stats(cells)})    
         
+
+    row3 = soup.find("tr", {"id": "per_game_stats.2024"})
+    if row3 != None:
+        cells = [cell.get_text(strip=True) for cell in row3.find_all(["th", "td"])]
+
+        return_array.append({"2023-2024": extract_stats(cells)})
+
+    row4 = soup.find("tr", {"id": "per_game_stats.2023"})
+    if row4 != None:
+        cells = [cell.get_text(strip=True) for cell in row4.find_all(["th", "td"])]
+
+        return_array.append({"2022-2023": extract_stats(cells)})
+
+    row5 = soup.find("tr", {"id": "per_game_stats.2022"})
+    if row5 != None:
+        cells = [cell.get_text(strip=True) for cell in row5.find_all(["th", "td"])]
+
+        return_array.append({"2021-2022": extract_stats(cells)})
+
+    return return_array
+
+
+
+def extract_career_stats(player_name):
+    first_last = player_name.split()
+    first = first_last[0].lower()
+    last = first_last[-1].lower()
+
+    letter = last[0]
+    url = f"""https://www.basketball-reference.com/players/{letter}/{last[:5]}{first[:2]}01.html"""
+    html = requests.get(url).text
+    soup = BeautifulSoup(html, "html.parser")
+    row = soup.find("tr", {"id": "per_game_stats.Yrs"})
+
+    # Extract all <td> and <th> cells
+    cells = [cell.get_text(strip=True) for cell in row.find_all(["th", "td"])]
+
+    return {
+        "Years": cells[0],
+        "Games": cells[2],
+        "Games Started": cells[3],
+        "Field Goals": cells[5],
+        "Field Goal Attempts": cells[6],
+        "Field Goal Percentage": cells[7],
+        "3 Pointers": cells[8],
+        "3 Point Attempts": cells[9],
+        "3 Point Percentage": cells[10],
+        "Free Throws": cells[15],
+        "Free Throw Attempts": cells[16],
+        "Free Throw Percentage": cells[17],
+        "Rebounds Per Game": cells[20],
+        "Assists Per Game": cells[21],
+        "Steals Per Game": cells[22],
+        "Blocks Per Game": cells[23],
+        "Turnovers Per Game": cells[24],
+        "Points Per Game": cells[26]
+
+    }
+
+
+
+def get_team_stats(player_name):
+    id = get_id(player_name)
+    info = commonplayerinfo.CommonPlayerInfo(player_id=id)
+    df = info.get_data_frames()[0]
+
+    team_name = df["TEAM_NAME"]
+    team_id = df["TEAM_ID"].iloc[0]
+
+    team_stats = teamyearbyyearstats.TeamYearByYearStats(
+        league_id="00",
+        per_mode_simple="PerGame",
+        season_type_all_star="Regular Season",
+        team_id=team_id
     )
 
+    df = team_stats.get_data_frames()[0]
+    row = df.loc[df["YEAR"] == "2025-26"]
+    return{
+        "Wins": row["WINS"].iloc[0],
+        "Losses": row["LOSSES"].iloc[0],
+        "Seed": row["CONF_RANK"].iloc[0],
+        "Field Goals": row["FGM"].iloc[0],
+        "Field Goal Attempts": row["FGA"].iloc[0],
+        "Field Goal Percentage": row["FG_PCT"].iloc[0],
+        "3 Point Makes": row["FG3M"].iloc[0],
+        "3 Point Attempts": row["FG3A"].iloc[0],
+        "3 Point Percentage": row["FG3_PCT"].iloc[0],
+        "Offensive Rebounds": row["OREB"].iloc[0],
+        "Defensive Rebounds": row["DREB"].iloc[0],
+        "Rebounds": row["REB"].iloc[0],
+        "Assists": row["AST"].iloc[0],
+        "Steals": row["STL"].iloc[0],
+        "Turnovers": row["TOV"].iloc[0],
+        "Blocks": row["BLK"].iloc[0],
+        "Points": row["PTS"].iloc[0],
+        "Points Rank": row["PTS_RANK"].iloc[0] 
+    }
 
 
-
+    
 def all_time_rankings(player_name):
     player_dict = players.find_players_by_full_name(player_name)[0]
 
-    print(player_dict)
     id = player_dict["id"]
 
     leaders = alltimeleadersgrids.AllTimeLeadersGrids(
@@ -120,27 +261,27 @@ def get_clutch_stats(player_name):
     ra_fga = 0
     ra_fgm = 0
     
-    if zone_splits.get("Above the Break 3", 0) != 0:
+    if "Above the Break 3" in zone_splits.index:
         atb_three_fga = zone_splits.loc["Above the Break 3", "FGA"]
         atb_three_fgm = zone_splits.loc["Above the Break 3", "FGM"]
 
-    if zone_splits.get("Mid-Range", 0) != 0:
-        mid_range_fga = zone_splits.get["Mid-Range", "FGA"]
+    if "Mid-Range" in zone_splits.index:
+        mid_range_fga = zone_splits.loc["Mid-Range", "FGA"]
         mid_range_fgm = zone_splits.loc["Mid-Range", "FGM"]
     
-    if zone_splits.get("Right Corner 3", 0) != 0:
-        right_corner_three_fga = zone_splits.get["Right Corner 3", "FGA"]
-        right_corner_three_fgm = zone_splits.get["Right Corner 3", "FGM"]
+    if "Right Corner 3" in zone_splits.index:
+        right_corner_three_fga = zone_splits.loc["Right Corner 3", "FGA"]
+        right_corner_three_fgm = zone_splits.loc["Right Corner 3", "FGM"]
 
-    if zone_splits.get("Left Corner 3", 0) != 0:
-        left_corner_three_fga = zone_splits.get["Left Corner 3", "FGA"]
-        left_corner_three_fgm = zone_splits.get["Left Corner 3", "FGM"]
+    if "Left Corner 3" in zone_splits.index:
+        left_corner_three_fga = zone_splits.loc["Left Corner 3", "FGA"]
+        left_corner_three_fgm = zone_splits.loc["Left Corner 3", "FGM"]
 
-    if zone_splits.get("In The Paint (Non-RA)", 0) != 0:
+    if "In The Paint (Non-RA)" in zone_splits.index:
         itp_fga = zone_splits.loc["In The Paint (Non-RA)", "FGA"]
         itp_fgm = zone_splits.loc["In The Paint (Non-RA)", "FGM"]
 
-    if zone_splits.get("Restricted Area", 0) != 0:
+    if "Restricted Area" in zone_splits.index:
         ra_fga = zone_splits.loc["Restricted Area", "FGA"]
         ra_fgm = zone_splits.loc["Restricted Area", "FGM"]
 
@@ -175,27 +316,6 @@ def get_clutch_stats(player_name):
         "Overall 3PM": overall_3pm,
         "Overall 3 Point Percentage": three_point_percentage
     }
-
-
-
-
-def get_team_stats(player_name):
-
-
-
-    return
-
-def get_career_stats(player_name):
-
-    return
-
-
-def get_season_stats(player_name):
-
-
-    return
-
-
 
 def get_zones(player_name):
     id = get_id(player_name)
@@ -249,27 +369,27 @@ def get_zones(player_name):
     ra_fga = 0
     ra_fgm = 0
     
-    if zone_splits.get("Above the Break 3", 0) != 0:
+    if "Above the Break 3" in zone_splits.index:
         atb_three_fga = zone_splits.loc["Above the Break 3", "FGA"]
         atb_three_fgm = zone_splits.loc["Above the Break 3", "FGM"]
 
-    if zone_splits.get("Mid-Range", 0) != 0:
-        mid_range_fga = zone_splits.get["Mid-Range", "FGA"]
+    if "Mid-Range" in zone_splits.index:
+        mid_range_fga = zone_splits.loc["Mid-Range", "FGA"]
         mid_range_fgm = zone_splits.loc["Mid-Range", "FGM"]
     
-    if zone_splits.get("Right Corner 3", 0) != 0:
-        right_corner_three_fga = zone_splits.get["Right Corner 3", "FGA"]
-        right_corner_three_fgm = zone_splits.get["Right Corner 3", "FGM"]
+    if "Right Corner 3" in zone_splits.index:
+        right_corner_three_fga = zone_splits.loc["Right Corner 3", "FGA"]
+        right_corner_three_fgm = zone_splits.loc["Right Corner 3", "FGM"]
 
-    if zone_splits.get("Left Corner 3", 0) != 0:
-        left_corner_three_fga = zone_splits.get["Left Corner 3", "FGA"]
-        left_corner_three_fgm = zone_splits.get["Left Corner 3", "FGM"]
+    if "Left Corner 3" in zone_splits.index:
+        left_corner_three_fga = zone_splits.loc["Left Corner 3", "FGA"]
+        left_corner_three_fgm = zone_splits.loc["Left Corner 3", "FGM"]
 
-    if zone_splits.get("In The Paint (Non-RA)", 0) != 0:
+    if "In The Paint (Non-RA)" in zone_splits.index:
         itp_fga = zone_splits.loc["In The Paint (Non-RA)", "FGA"]
         itp_fgm = zone_splits.loc["In The Paint (Non-RA)", "FGM"]
 
-    if zone_splits.get("Restricted Area", 0) != 0:
+    if "Restricted Area" in zone_splits.index:
         ra_fga = zone_splits.loc["Restricted Area", "FGA"]
         ra_fgm = zone_splits.loc["Restricted Area", "FGM"]
 
@@ -304,6 +424,38 @@ def get_zones(player_name):
         "Overall 3PM": overall_3pm,
         "Overall 3 Point Percentage": three_point_percentage
     }
-    
 
-print(all_time_rankings("Lebron James"))
+def get_last_season_stats(player_name):
+    first_last = player_name.split()
+    first = first_last[0].lower()
+    last = first_last[-1].lower()
+
+    letter = last[0]
+    url = f"""https://www.basketball-reference.com/players/{letter}/{last[:5]}{first[:2]}01.html"""
+    html = requests.get(url).text
+    soup = BeautifulSoup(html, "html.parser")
+
+    row1 = soup.find("tr", {"id": "per_game_stats.2026"})
+    if row1 != None:
+        cells = [cell.get_text(strip=True) for cell in row1.find_all(["th", "td"])]
+
+        return extract_stats(cells)
+    return "Did not play last season"    
+
+
+def analyze_player(player_name):
+    stats = {
+        "clutch":get_clutch_stats(player_name),
+        "career": extract_career_stats(player_name),
+        "season": get_last_season_stats(player_name),
+        "zones": get_zones(player_name),
+        "team": get_team_stats(player_name)
+    }
+    prompt = llm_api.create_prompt(
+        stats["clutch"], stats["career"], stats["season"],
+        stats["zones"], stats["team"]
+    )
+    print("Past here")
+    return llm_api.api_call(prompt)
+
+
