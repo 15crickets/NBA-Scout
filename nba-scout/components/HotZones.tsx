@@ -1,23 +1,38 @@
 import type { ZoneEfficiency, ZoneId } from "./types";
 
 interface HotZonesProps {
-  // If omitted, falls back to the original static palette.
+  // If omitted, falls back to the neutral "average" palette.
   zoneEfficiency?: ZoneEfficiency;
 }
 
-// Maps a 0–1 efficiency value to a color on a cold -> hot scale.
-// Swap this out for whatever palette you like — this is just a starting point.
+// Neutral yellow/orange used before data loads, and as the midpoint of the scale.
+const AVERAGE_COLOR = "#9ca3af"; // amber-500 — visually appealing, reads as "neutral"
+
+// Maps a -1..1 efficiency value to a color on a cold -> average -> hot scale.
+// -1 = cold/inefficient (blue)   — e.g. fgPct far below league average
+//  0 = average (neutral yellow/orange) — e.g. fgPct == league average
+// +1 = hot/efficient (red)       — e.g. fgPct far above league average
+//
+// Intended usage: pass (playerFgPct - leagueAvgFgPct) / spread, where `spread`
+// is however far above/below average you consider "maximally" hot/cold
+// (e.g. 0.15 = ±15 percentage points saturates the color).
 function efficiencyToColor(value: number | undefined, fallback: string): string {
   if (value === undefined) return fallback;
-  const clamped = Math.max(0, Math.min(1, value));
+  const clamped = Math.max(-1, Math.min(1, value));
 
-  // blue (cold/inefficient) -> red (hot/efficient)
-  const cold = { r: 59, g: 130, b: 246 }; // #3b82f6
-  const hot = { r: 239, g: 68, b: 68 }; // #ef4444
+  const cold = { r: 59, g: 130, b: 246 };   // #3b82f6
+  const average = { r: 156, g: 163, b: 175 }; // #eab308
+  const hot = { r: 239, g: 68, b: 68 };     // #ef4444
 
-  const r = Math.round(cold.r + (hot.r - cold.r) * clamped);
-  const g = Math.round(cold.g + (hot.g - cold.g) * clamped);
-  const b = Math.round(cold.b + (hot.b - cold.b) * clamped);
+  // Interpolate cold -> average for negative values, average -> hot for positive.
+  const [from, to, t] =
+    clamped <= 0
+      ? [cold, average, clamped + 1] // clamped in [-1, 0] -> t in [0, 1]
+      : [average, hot, clamped];      // clamped in [0, 1]  -> t in [0, 1]
+
+  const r = Math.round(from.r + (to.r - from.r) * t);
+  const g = Math.round(from.g + (to.g - from.g) * t);
+  const b = Math.round(from.b + (to.b - from.b) * t);
 
   return `rgb(${r}, ${g}, ${b})`;
 }
@@ -42,14 +57,15 @@ export default function HotZones({ zoneEfficiency }: HotZonesProps) {
   const ftLeft = basketX - ftSpan
   const ftRight = basketX + ftSpan
 
-  // Original static colors, used as fallback when no data is loaded yet.
+  // Default/fallback colors before real data loads — all zones start at the
+  // same neutral "average" color rather than the old distinct static palette.
   const fallbackColors: Record<ZoneId, string> = {
-    aboveBreak3: "#3b82f6",
-    leftCorner3: "#22c55e",
-    rightCorner3: "#22c55e",
-    midrange: "#f97316",
-    paintNonRA: "#a855f7",
-    restrictedArea: "#ef4444",
+    aboveBreak3: AVERAGE_COLOR,
+    leftCorner3: AVERAGE_COLOR,
+    rightCorner3: AVERAGE_COLOR,
+    midrange: AVERAGE_COLOR,
+    paintNonRA: AVERAGE_COLOR,
+    restrictedArea: AVERAGE_COLOR,
   };
 
   const colors: Record<ZoneId, string> = {

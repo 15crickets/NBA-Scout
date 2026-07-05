@@ -5,16 +5,27 @@ interface StatTableProps {
   isLoading?: boolean;
 }
 
-const COLUMNS: { key: keyof StatRow; label: string; format?: (v: number) => string }[] = [
+const COLUMNS: { key: keyof StatRow; label: string; format?: (v: any) => string }[] = [
   { key: "season", label: "Season" },
+  { key: "age", label: "Age" },
   { key: "team", label: "Team" },
   { key: "gp", label: "GP" },
-  { key: "ppg", label: "PPG", format: (v) => v.toFixed(1) },
-  { key: "apg", label: "APG", format: (v) => v.toFixed(1) },
-  { key: "rpg", label: "RPG", format: (v) => v.toFixed(1) },
+  { key: "gs", label: "GS" },
+  { key: "fg", label: "FG", format: (v) => v.toFixed(1) },
+  { key: "fga", label: "FGA", format: (v) => v.toFixed(1) },
   { key: "fgPct", label: "FG%", format: (v) => `${(v * 100).toFixed(1)}%` },
+  { key: "threeM", label: "3PM", format: (v) => v.toFixed(1) },
+  { key: "threeA", label: "3PA", format: (v) => v.toFixed(1) },
   { key: "threePct", label: "3P%", format: (v) => `${(v * 100).toFixed(1)}%` },
+  { key: "ft", label: "FT", format: (v) => v.toFixed(1) },
+  { key: "fta", label: "FTA", format: (v) => v.toFixed(1) },
   { key: "ftPct", label: "FT%", format: (v) => `${(v * 100).toFixed(1)}%` },
+  { key: "rpg", label: "RPG", format: (v) => v.toFixed(1) },
+  { key: "apg", label: "APG", format: (v) => v.toFixed(1) },
+  { key: "spg", label: "SPG", format: (v) => v.toFixed(1) },
+  { key: "bpg", label: "BPG", format: (v) => v.toFixed(1) },
+  { key: "tpg", label: "TOV", format: (v) => v.toFixed(1) },
+  { key: "ppg", label: "PPG", format: (v) => v.toFixed(1) },
 ];
 
 export default function StatTable({ rows, isLoading }: StatTableProps) {

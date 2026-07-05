@@ -26,22 +26,31 @@ export interface PlayerHeadline {
   careerRpg: number;
 }
 
+// types.ts
 export interface StatRow {
-  season: string; // e.g. "2023-24"
+  season: string;
+  age: string;
   team: string;
-  gp: number; // games played
-  ppg: number;
-  apg: number;
-  rpg: number;
+  gp: number;
+  gs: number;
+  fg: number;
+  fga: number;
   fgPct: number;
+  threeM: number;
+  threeA: number;
   threePct: number;
+  ft: number;
+  fta: number;
   ftPct: number;
+  rpg: number;
+  apg: number;
+  spg: number;
+  bpg: number;
+  tpg: number; // turnovers per game
+  ppg: number;
 }
 
+// types.ts
 export interface ScoutingSummary {
-  playerId: string;
   summary: string; // the generated/written scouting text
-  strengths: string[];
-  weaknesses: string[];
-  generatedAt: string; // ISO date, useful for cache invalidation later
 }

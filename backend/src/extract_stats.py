@@ -425,6 +425,21 @@ def get_zones(player_name):
         "Overall 3 Point Percentage": three_point_percentage
     }
 
+def get_player_info(player_name):
+    id = get_id(player_name)
+    info = commonplayerinfo.CommonPlayerInfo(player_id=id)
+    df = info.get_data_frames()[0]
+    row = df.iloc[0]
+
+    return {
+        "playerId": str(id),
+        "name": row["DISPLAY_FIRST_LAST"],
+        "team": row["TEAM_NAME"],
+        "teamAbbreviation": row["TEAM_ABBREVIATION"],
+        "jerseyNumber": row["JERSEY"],
+        "position": row["POSITION"],
+    }
+
 def get_last_season_stats(player_name):
     first_last = player_name.split()
     first = first_last[0].lower()
@@ -459,3 +474,4 @@ def analyze_player(player_name):
     return llm_api.api_call(prompt)
 
 
+print(get_player_info("Lebron James"))
