@@ -19,7 +19,7 @@ def api_call(prompt):
             "X-Title": "My App"
         },
         json={
-            "model": "nvidia/nemotron-3-super-120b-a12b:free",
+            "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
             "messages": [
                 {"role": "user", "content": prompt}
             ]

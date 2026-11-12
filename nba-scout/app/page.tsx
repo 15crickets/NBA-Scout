@@ -22,6 +22,7 @@ export default function Home() {
   const [zoneEfficiency, setZoneEfficiency] = useState<ZoneEfficiency | undefined> (undefined)
   const [scouting, setScouting] = useState<ScoutingSummaryType | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isScoutingLoading, setIsScoutingLoading] = useState(false)
 
   const SPREAD = 0.06;
 
@@ -143,19 +144,29 @@ export default function Home() {
 
   async function handleSearch(playerName: string) {
     setIsLoading(true);
+    setIsScoutingLoading(true);
+
+    const statsPromise = getPlayerStats(playerName);
+    const scoutingPromise = getLLMSummary(playerName);
+
     try {
-      const [data, report] = await Promise.all([
-        getPlayerStats(playerName),
-        getLLMSummary(playerName),
-      ]);
-      setStatRows(mapStatRows(data))
+      const data = await statsPromise;
+      setStatRows(mapStatRows(data));
       setPlayer(mapPlayerHeadline(data));
-      setScouting(mapScoutingSummary(report));
-      setZoneEfficiency(mapZoneEfficiency(data))
+      setZoneEfficiency(mapZoneEfficiency(data));
     } catch (err) {
       console.error(err);
     } finally {
       setIsLoading(false);
+    }
+
+    try {
+      const report = await scoutingPromise;
+      setScouting(mapScoutingSummary(report));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsScoutingLoading(false);
     }
   }
 
@@ -189,7 +200,7 @@ export default function Home() {
           <StatTable rows={statRows} isLoading={isLoading} />
         </div>
 
-        <ScoutingSummary summary={scouting} isLoading={isLoading} />
+        <ScoutingSummary summary={scouting} isLoading={isScoutingLoading} />
       </main>
     </div>
   );

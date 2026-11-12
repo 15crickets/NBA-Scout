@@ -139,7 +139,11 @@ def get_team_stats(player_name):
     )
 
     df = team_stats.get_data_frames()[0]
-    row = df.loc[df["YEAR"] == "2025-26"]
+    row = df.loc[df["YEAR"] == "2026-27"]
+    if row.empty:
+        row = df.loc[df["YEAR"] == "2025-26"]
+    if row.empty:
+        raise ValueError("No current season team data found")
     return{
         "Wins": row["WINS"].iloc[0],
         "Losses": row["LOSSES"].iloc[0],
@@ -213,7 +217,7 @@ def get_clutch_stats(player_name):
     shots = shotchartdetail.ShotChartDetail(
         team_id=0,
         player_id=id,
-        season_nullable='2025-26',
+        season_nullable='2026-27',
         season_type_all_star='Regular Season',
         context_measure_simple='FGA',
         clutch_time_nullable="Last 5 Minutes",
@@ -289,12 +293,12 @@ def get_clutch_stats(player_name):
     overall_fg_attempts = atb_three_fga + mid_range_fga + right_corner_three_fga + left_corner_three_fga + itp_fga + ra_fga
     overall_fg_makes = atb_three_fgm + mid_range_fgm + right_corner_three_fgm + left_corner_three_fgm + itp_fgm + ra_fgm
 
-    fg_percentage = overall_fg_makes/overall_fg_attempts
+    fg_percentage = overall_fg_makes / overall_fg_attempts if overall_fg_attempts > 0 else 0
 
     overall_3pa = atb_three_fga + right_corner_three_fga + left_corner_three_fga
     overall_3pm = atb_three_fgm + right_corner_three_fgm + left_corner_three_fgm
 
-    three_point_percentage = overall_3pm/overall_3pa
+    three_point_percentage = overall_3pm / overall_3pa if overall_3pa > 0 else 0
 
     return {
         "Mid-Range FGA": mid_range_fga,
@@ -324,7 +328,7 @@ def get_zones(player_name):
     shots = shotchartdetail.ShotChartDetail(
         team_id=0,
         player_id=id,
-        season_nullable='2024-25',
+        season_nullable='2025-26',
         season_type_all_star='Regular Season',
         context_measure_simple='FGA'
     )
@@ -397,12 +401,12 @@ def get_zones(player_name):
     overall_fg_attempts = atb_three_fga + mid_range_fga + right_corner_three_fga + left_corner_three_fga + itp_fga + ra_fga
     overall_fg_makes = atb_three_fgm + mid_range_fgm + right_corner_three_fgm + left_corner_three_fgm + itp_fgm + ra_fgm
 
-    fg_percentage = overall_fg_makes/overall_fg_attempts
+    fg_percentage = overall_fg_makes / overall_fg_attempts if overall_fg_attempts > 0 else 0
 
     overall_3pa = atb_three_fga + right_corner_three_fga + left_corner_three_fga
     overall_3pm = atb_three_fgm + right_corner_three_fgm + left_corner_three_fgm
 
-    three_point_percentage = overall_3pm/overall_3pa
+    three_point_percentage = overall_3pm / overall_3pa if overall_3pa > 0 else 0
 
     return {
         "Mid-Range FGA": mid_range_fga,
@@ -474,4 +478,3 @@ def analyze_player(player_name):
     return llm_api.api_call(prompt)
 
 
-print(get_player_info("Lebron James"))
