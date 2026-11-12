@@ -50,6 +50,12 @@ export interface StatRow {
   ppg: number;
 }
 
+export interface ClipResult {
+  videoId: string;
+  title: string;
+  thumbnail: string;
+}
+
 // types.ts
 export interface ScoutingSummary {
   summary: string; // the generated/written scouting text

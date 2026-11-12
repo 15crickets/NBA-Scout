@@ -3,9 +3,10 @@ import { useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import HotZones from "@/components/HotZones";
 import PlayerCard from "@/components/PlayerCard";
+import PlayerClips from "@/components/PlayerClips";
 import StatTable from "@/components/StatTable";
 import ScoutingSummary from "@/components/ScoutingSummary";
-import type { PlayerHeadline, StatRow, ZoneEfficiency, ZoneId, ScoutingSummary as ScoutingSummaryType} from "@/components/types";
+import type { PlayerHeadline, StatRow, ZoneEfficiency, ZoneId, ScoutingSummary as ScoutingSummaryType, ClipResult } from "@/components/types";
 
 function SectionHeader({ title }: { title: string }) {
   return (
@@ -23,6 +24,8 @@ export default function Home() {
   const [scouting, setScouting] = useState<ScoutingSummaryType | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isScoutingLoading, setIsScoutingLoading] = useState(false)
+  const [clips, setClips] = useState<ClipResult[] | null>(null)
+  const [isClipsLoading, setIsClipsLoading] = useState(false)
 
   const SPREAD = 0.06;
 
@@ -142,12 +145,30 @@ export default function Home() {
     return data
   }
 
+  async function getPlayerClips(playerName: string) {
+    const response = await fetch(
+      `http://localhost:5001/api/player-clips?player=${encodeURIComponent(playerName)}`
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Request failed");
+    }
+    const data = await response.json();
+    return data.map((item: any): ClipResult => ({
+      videoId: item.video_id,
+      title: item.title,
+      thumbnail: item.thumbnail,
+    }));
+  }
+
   async function handleSearch(playerName: string) {
     setIsLoading(true);
     setIsScoutingLoading(true);
+    setIsClipsLoading(true);
 
     const statsPromise = getPlayerStats(playerName);
     const scoutingPromise = getLLMSummary(playerName);
+    const clipsPromise = getPlayerClips(playerName);
 
     try {
       const data = await statsPromise;
@@ -168,6 +189,15 @@ export default function Home() {
     } finally {
       setIsScoutingLoading(false);
     }
+
+    try {
+      const clipData = await clipsPromise;
+      setClips(clipData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsClipsLoading(false);
+    }
   }
 
   return (
@@ -184,9 +214,13 @@ export default function Home() {
 
         <SearchBar onSearch={handleSearch} isLoading={isLoading} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="md:col-span-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          <div className="md:col-span-1 flex flex-col gap-4">
             <PlayerCard player={player} isLoading={isLoading} />
+            <div>
+              <SectionHeader title="Popular Clips" />
+              <PlayerClips clips={clips} isLoading={isClipsLoading} />
+            </div>
           </div>
 
           <div className="md:col-span-1">
