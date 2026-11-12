@@ -216,7 +216,10 @@ export default function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div className="md:col-span-1 flex flex-col gap-4">
-            <PlayerCard player={player} isLoading={isLoading} />
+            <div>
+              <SectionHeader title="Player Card" />
+              <PlayerCard player={player} isLoading={isLoading} />
+            </div>
             <div>
               <SectionHeader title="Popular Clips" />
               <PlayerClips clips={clips} isLoading={isClipsLoading} />
@@ -234,7 +237,10 @@ export default function Home() {
           <StatTable rows={statRows} isLoading={isLoading} />
         </div>
 
-        <ScoutingSummary summary={scouting} isLoading={isScoutingLoading} />
+        <div>
+          <SectionHeader title="Scouting Report" />
+          <ScoutingSummary summary={scouting} isLoading={isScoutingLoading} />
+        </div>
       </main>
     </div>
   );

@@ -31,7 +31,6 @@ export default function ScoutingSummary({ summary, isLoading }: ScoutingSummaryP
   return (
     <div className="w-full rounded-lg border border-zinc-800 bg-zinc-900 p-5">
       <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500 mb-2">
-        Scouting Summary
       </h3>
       <p className="text-sm leading-relaxed text-zinc-200 whitespace-pre-line">
         {summary.summary}
